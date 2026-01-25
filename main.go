@@ -18,7 +18,7 @@ func main() {
 
 	// Route Api Category
 
-	mux.HandleFunc("GET /api/categories/", service.GetCategoryHandler)
+	mux.HandleFunc("GET /api/categories", service.GetCategoryHandler)
 	mux.HandleFunc("GET /api/categories/{id}", service.GetCategoryByIDHandler)
 	mux.HandleFunc("POST /api/categories", service.CreatedCategoryHandler)
 	mux.HandleFunc("PUT /api/categories/{id}", service.UpdateCategoryHandler)
