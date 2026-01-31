@@ -5,10 +5,19 @@ import (
 	"net/http"
 )
 
-func JsonResponse(w http.ResponseWriter, status int, data interface{}){
+type Response struct {
+	Status int `json:"status"`
+	Message string `json:"message"`
+	Data interface{} `json:"data"`
+}
+
+func JsonResponse(w http.ResponseWriter, status int, message string, data interface{}){
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if data != nil {
-		json.NewEncoder(w).Encode(data)
+	response := Response{
+		Status: status,
+		Message: message,
+		Data: data,
 	}
+	json.NewEncoder(w).Encode(response)
 }

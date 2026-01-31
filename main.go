@@ -2,34 +2,73 @@ package main
 
 import (
 	"fmt"
-	"kasir-api/service"
+	"kasir-api/database"
+	"kasir-api/handlers"
+	"kasir-api/repositories"
+	"kasir-api/services"
+	"log"
 	"net/http"
+	"os"
+	"strings"
+
+	"github.com/spf13/viper"
 )
 
+type Config struct {
+	Port    string `mapstructure:"PORT"`
+	DBConn string `mapstructure:"DB_CONN"`
+}
+
 func main() {
-	mux := http.NewServeMux()
 
-	// Route Api Produk
-	mux.HandleFunc("GET /api/produk", service.GetProdukHandler)
-	mux.HandleFunc("GET /api/produk/{id}", service.GetProdukByIdHandler)
-	mux.HandleFunc("POST /api/produk/", service.CreateProdukHandler)
-	mux.HandleFunc("PUT /api/produk/{id}", service.UpdateProdukHandler)
-	mux.HandleFunc("DELETE /api/produk/{id}", service.DeleteProdukHandler)
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	// Route Api Category
-
-	mux.HandleFunc("GET /api/categories", service.GetCategoryHandler)
-	mux.HandleFunc("GET /api/categories/{id}", service.GetCategoryByIDHandler)
-	mux.HandleFunc("POST /api/categories", service.CreatedCategoryHandler)
-	mux.HandleFunc("PUT /api/categories/{id}", service.UpdateCategoryHandler)
-	mux.HandleFunc("DELETE /api/categories/{id}", service.DeleteCategoryHandler)
-
-
-	fmt.Println("Server Berjalan di port 8080")
-	if err := http.ListenAndServe(":8080",  mux); err != nil{
-		fmt.Println("Gagal menjalankan server:", err)
+	if _, err := os.Stat(".env"); err == nil {
+		viper.SetConfigFile(".env")
+		_ = viper.ReadInConfig()
 	}
 
+	config := Config{
+ 		Port: viper.GetString("PORT"),
+		DBConn: viper.GetString("DB_CONN"),
+	}
+
+	db, err := database.InitDB(config.DBConn)
+	if err != nil {
+		log.Fatal("Failed to initialize database:", err)
+	}
+	defer db.Close()
+
+	// Route Product
+	productRepo := repositories.NewProductRepository(db)
+	productService := services.NewProductService(productRepo)
+	productHandler := handlers.NewProductHandler(productService)
+
+	// HandleProducts - GET /api/produk
+	http.HandleFunc("/api/produk", productHandler.HandleProducts)
+
+	// HandleProductByID - GET /api/produk/{id}
+	http.HandleFunc("/api/produk/", productHandler.HandleProductByID)
+
+	// Route Category
+	categoryRepo := repositories.NewCategoryRepository(db)
+	categoryService := services.NewCategoryService(categoryRepo)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
+
+	// HandleCategory - GET /api/category
+	http.HandleFunc("/api/category", categoryHandler.HandleCategory)
+
+	// HandleCategory - GET /api/category/{id}
+	http.HandleFunc("/api/category/", categoryHandler.HandleCategoryByID)
+
+	fmt.Println("Server Berjalan di port:" + config.Port)
+	err = http.ListenAndServe(":"+config.Port,  nil)
+	if  err != nil{
+		fmt.Println("Gagal menjalankan server:", err)
+	}
 }
+
+
 
 
