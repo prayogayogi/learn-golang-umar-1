@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"kasir-api/models"
 )
 
@@ -14,9 +15,23 @@ func NewProductRepository(db *sql.DB) *ProductRepository{
 	return &ProductRepository{db: db}
 }
 
-func (repo *ProductRepository) GetAll() ([]models.Product, error){
-	query := "SELECT p.id, p.name, p.price, p.stock, p.category_id, c.name as category_name FROM product p JOIN category c ON p.category_id = c.id"
-	rows, err := repo.db.Query(query)
+func (repo *ProductRepository) GetAll(filter models.ProdukFilter) ([]models.Product, error){
+	query := "SELECT p.id, p.name, p.price, p.stock, p.category_id, p.active, c.name as category_name FROM product p JOIN category c ON p.category_id = c.id"
+	args := []interface{}{}
+	counter := 1
+	if filter.Name != ""{
+		query += " WHERE p.name ILIKE $1"
+		args = append(args, "%"+filter.Name+"%")
+		counter++
+	}
+
+	if filter.Active != "" {
+		query += fmt.Sprintf(" AND p.active = $%d", counter)
+		args = append(args, filter.Active)
+		counter++
+	}
+
+	rows, err := repo.db.Query(query, args...)
 	if err != nil{
 		return nil, err
 	}
@@ -25,7 +40,7 @@ func (repo *ProductRepository) GetAll() ([]models.Product, error){
 	products := make([]models.Product, 0)
 	for rows.Next(){
 		var product models.Product
-		err := rows.Scan(&product.ID, &product.Name, &product.Price, &product.Stock, &product.CategoryID, &product.CategoryName)
+		err := rows.Scan(&product.ID, &product.Name, &product.Price, &product.Stock, &product.CategoryID, &product.Active, &product.CategoryName)
 		if err != nil{
 			return nil, err
 		}

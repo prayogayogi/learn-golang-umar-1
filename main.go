@@ -62,6 +62,13 @@ func main() {
 	// HandleCategory - GET /api/category/{id}
 	http.HandleFunc("/api/category/", categoryHandler.HandleCategoryByID)
 
+	// Transaction
+	transactionRepo := repositories.NewTransactionRepository(db)
+	transactionService := services.NewTransactionService(transactionRepo)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
+
+	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout) // POST
+
 	fmt.Println("Server Berjalan di port:" + config.Port)
 	err = http.ListenAndServe(":"+config.Port,  nil)
 	if  err != nil{

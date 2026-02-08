@@ -30,7 +30,12 @@ func (handler *ProductHandler) HandleProducts(w http.ResponseWriter, r *http.Req
 }
 
 func (handler *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	products, err := handler.service.GetAll()
+	query := r.URL.Query()
+	filter := models.ProdukFilter{
+		Name: query.Get("name"),
+		Active: query.Get("active"),
+	}
+	products, err := handler.service.GetAll(filter)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
