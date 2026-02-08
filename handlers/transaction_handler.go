@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"kasir-api/helpers"
 	"kasir-api/models"
 	"net/http"
 
@@ -40,6 +41,5 @@ func (h *TransactionHandler) Checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(transaction)
+	helpers.JsonResponse(w, http.StatusOK, "Data Berhasil di Checkout", transaction)
 }

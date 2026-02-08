@@ -69,6 +69,13 @@ func main() {
 
 	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout) // POST
 
+	// Report
+	reportRepo := repositories.NewReportRepository(db)
+	reportService := services.NewReportService(reportRepo)
+	reportHandler := handlers.NewReportHandler(reportService)
+
+	http.HandleFunc("/api/report/hari-ini", reportHandler.Report) // Get
+
 	fmt.Println("Server Berjalan di port:" + config.Port)
 	err = http.ListenAndServe(":"+config.Port,  nil)
 	if  err != nil{
